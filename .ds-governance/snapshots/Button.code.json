@@ -1,0 +1,12 @@
+{
+  "component": "Button",
+  "tokens": {
+    "background.primary": "color.action.primary",
+    "paddingY": "spacing.2",
+    "paddingX": "spacing.4",
+    "radius": "radius.lg"
+  },
+  "metrics": {
+    "primary.height": 36
+  }
+}

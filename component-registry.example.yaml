@@ -1,0 +1,50 @@
+schema_version: 1
+
+discovery:
+  code_glob: "**/*.{tsx,ts,css,scss,vue,svelte}"
+  auto_register: suggest
+
+_default:
+  kind: primitive
+  checks: default_primitive
+  owners:
+    slack_channel: "#design-system"
+    github: "@ds-team"
+
+components:
+  Button:
+    kind: primitive
+    checks: default_primitive
+    owners:
+      slack_channel: "#ds-components"
+      github: "@ds-button-owners"
+    source_of_truth:
+      mode: dual_compare
+      code:
+        paths:
+          - "packages/button/**"
+          - "src/components/Button/**"
+          - "fixtures/sample-contribution/src/components/Button/**"
+      figma:
+        file_key: "REPLACE_WITH_FIGMA_FILE_KEY"
+        component_set_node_id: "0:0"
+    designer_owners:
+      - "@designer-lead"
+
+  Input:
+    kind: primitive
+    checks: default_primitive
+    code:
+      paths:
+        - "packages/input/**"
+
+check_packs:
+  default_primitive:
+    - tokens
+    - duplicates
+    - figma_code
+    - api_stub
+  default_composite:
+    - tokens
+    - duplicates
+    - api_stub

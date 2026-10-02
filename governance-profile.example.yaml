@@ -1,0 +1,65 @@
+schema_version: 1
+
+defaults:
+  source_of_truth:
+    mode: dual_compare
+    on_conflict: flag_owner
+    code:
+      ref: main
+    figma:
+      enabled: false
+
+tokens:
+  manifest: tokens/tokens.json
+  allow_raw_values: false
+  patterns:
+    allowed_var_prefixes:
+      - "--"
+      - "var("
+      - "theme."
+
+triggers:
+  pull_request:
+    enabled: true
+    paths:
+      - "packages/**"
+      - "tokens/**"
+      - "src/**"
+
+severity_policy:
+  token_consistency: block
+  deprecated_token: warn
+  figma_code_mismatch: warn
+  duplicate_candidate: warn
+  docs_gap: info
+
+flagging:
+  github:
+    fail_on:
+      - block
+    annotate_lines: true
+  slack:
+    enabled: false
+    webhook_env: SLACK_WEBHOOK_URL
+    on:
+      - block
+      - warn
+    mention_owner_on:
+      - block
+  figma_comments:
+    enabled: false
+    token_env: FIGMA_ACCESS_TOKEN
+    on_severity:
+      - block
+      - warn
+    on_categories:
+      - figma_code_mismatch
+      - token_binding_mismatch
+    threading:
+      mode: one_thread_per_run
+    target:
+      prefer: contributor_branch
+      fallback: main_library
+
+notifications:
+  default_slack_channel: "#design-system"

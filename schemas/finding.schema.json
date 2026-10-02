@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/acme/design-system-governance/schemas/finding.json",
+  "title": "GovernanceFinding",
+  "type": "object",
+  "required": ["id", "component", "severity", "category", "title", "message"],
+  "properties": {
+    "id": { "type": "string" },
+    "component": { "type": "string" },
+    "severity": { "enum": ["block", "warn", "info"] },
+    "category": { "type": "string" },
+    "title": { "type": "string" },
+    "message": { "type": "string" },
+    "location": {
+      "type": "object",
+      "properties": {
+        "path": { "type": "string" },
+        "line": { "type": "integer" },
+        "column": { "type": "integer" }
+      }
+    },
+    "canonical": {
+      "type": "object",
+      "properties": {
+        "source": { "enum": ["figma", "code", "dual"] },
+        "expected": {},
+        "actual": {}
+      }
+    },
+    "evidence": { "type": "object" },
+    "fix": {
+      "type": "object",
+      "properties": {
+        "suggestion": { "type": "string" }
+      }
+    },
+    "figma": {
+      "type": "object",
+      "properties": {
+        "file_key": { "type": "string" },
+        "node_id": { "type": "string" },
+        "post_comment": { "type": "boolean" }
+      }
+    }
+  }
+}

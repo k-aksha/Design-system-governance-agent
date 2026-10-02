@@ -1,0 +1,8 @@
+waivers:
+  - id: DS-TOK-LEGACY-001
+    rule: no-raw-color-values
+    component: Button
+    path: packages/button/src/Button.legacy.tsx
+    reason: Legacy export; remove in v4
+    expires_at: "2026-12-31"
+    owner: "@ds-team"

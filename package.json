@@ -1,0 +1,28 @@
+{
+  "name": "@acme/design-system-governance",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Design system governance CLI — token checks, drift flags, GitHub / Slack / Figma surfaces",
+  "type": "module",
+  "bin": {
+    "ds-gov": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "ds-gov": "node dist/cli.js",
+    "check": "tsc --noEmit",
+    "test:fixtures": "node dist/cli.js run --profile governance-profile.example.yaml --registry component-registry.example.yaml --head fixtures/sample-contribution --base fixtures/sample-canonical --format console"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "commander": "^13.1.0",
+    "yaml": "^2.7.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.8.2"
+  }
+}

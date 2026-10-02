@@ -1,0 +1,6 @@
+node_modules/
+dist/
+governance-output.json
+pr-comment.md
+.env
+.DS_Store

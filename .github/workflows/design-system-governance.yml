@@ -1,0 +1,112 @@
+name: Design System Governance
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "packages/**"
+      - "src/**"
+      - "tokens/**"
+      - "governance-profile.yaml"
+      - "component-registry.yaml"
+  workflow_dispatch:
+    inputs:
+      component:
+        description: "Component id (optional)"
+        required: false
+      head_path:
+        description: "Path to scan (default repo root)"
+        required: false
+        default: "."
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  govern:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build CLI
+        run: npm run build
+
+      - name: Run governance
+        id: gov
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          FIGMA_ACCESS_TOKEN: ${{ secrets.FIGMA_ACCESS_TOKEN }}
+        run: |
+          PROFILE="${GOVERNANCE_PROFILE:-governance-profile.example.yaml}"
+          REGISTRY="${COMPONENT_REGISTRY:-component-registry.example.yaml}"
+          set -- run -p "$PROFILE" -r "$REGISTRY" \
+            --base "${{ github.base_ref }}" \
+            --head "${{ inputs.head_path || '.' }}" \
+            --workspace . \
+            --format json \
+            --github-output governance-output.json \
+            --pr-comment pr-comment.md
+          if [ -n "${{ github.event.pull_request.html_url }}" ]; then
+            set -- "$@" --pr-url "${{ github.event.pull_request.html_url }}"
+          fi
+          if [ -n "${{ inputs.component }}" ]; then
+            set -- "$@" --component "${{ inputs.component }}"
+          fi
+          if [ -f .ds-governance-waivers.yaml ]; then
+            set -- "$@" --waivers .ds-governance-waivers.yaml
+          fi
+          if [ -n "$SLACK_WEBHOOK_URL" ]; then set -- "$@" --slack; fi
+          if [ -n "$FIGMA_ACCESS_TOKEN" ]; then set -- "$@" --figma-comments; fi
+          node dist/cli.js "$@" || GOV_EXIT=$?
+          echo "exit=${GOV_EXIT:-0}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish PR comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let body = '## Design System Governance\n\n_No report generated._';
+            try {
+              body = fs.readFileSync('pr-comment.md', 'utf8');
+            } catch (e) {}
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const marker = '## Design System Governance';
+            const existing = comments.find(c => c.body?.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Fail job on governance verdict
+        run: |
+          if [ -f governance-output.json ]; then
+            node -e "const r=require('./governance-output.json').result; if(r.verdict==='fail') process.exit(1);"
+          elif [ "${{ steps.gov.outputs.exit }}" = "1" ]; then
+            exit 1
+          fi
